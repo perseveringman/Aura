@@ -25,7 +25,7 @@ title: 安装与快速入门
 
 1. 打开 Obsidian → 设置 → **Aura**。
 2. 在"转录服务商"中选择 **智谱 AI** 或 **火山引擎**。
-3. 填入对应的 API Key（详见 [Provider 配置](/Aura/providers/overview)）。
+3. 填入对应的 API Key（详见 [Provider 配置](/providers/overview)）。
 
 ## 第一次转录
 
