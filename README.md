@@ -13,6 +13,10 @@ An AI-powered Obsidian plugin that transforms your voice and notes into structur
 - **🔌 Multi-Provider LLM**: OpenAI, Gemini, Claude, DeepSeek, Minimax, Zhipu GLM, OpenRouter.
 - **📄 Long Audio Support**: Automatically chunks large files for providers with size limits.
 
+## iOS Shortcut
+
+Pair with the **[Record to Obsidian](https://www.icloud.com/shortcuts/5e5e2f8b05c643b4a5b1ccfb0c5922f3)** shortcut — record on your iPhone, audio saves to your Vault, then transcribe with Aura on desktop.
+
 ## Quick Start
 
 1. **Install**: Download `main.js`, `manifest.json`, `styles.css` to `.obsidian/plugins/aura/`, or install via BRAT.

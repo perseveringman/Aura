@@ -13,6 +13,10 @@
 - **🔌 多模型支持**：OpenAI、Gemini、Claude、DeepSeek、Minimax、智谱 GLM、OpenRouter。
 - **📄 长音频支持**：自动分片处理大文件。
 
+## iOS 快捷指令
+
+配套 **[「录音到 Obsidian」快捷指令](https://www.icloud.com/shortcuts/5e5e2f8b05c643b4a5b1ccfb0c5922f3)** —— 在 iPhone 上随时录音，音频自动保存到 Vault，回到桌面端用 Aura 转写。详见[使用文档](https://perseveringman.github.io/Aura/ios-shortcut)。
+
 ## 安装方法
 
 1. 前往 [GitHub Releases](https://github.com/perseveringman/Aura/releases) 下载最新版本的 `main.js`、`manifest.json`、`styles.css`。
