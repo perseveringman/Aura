@@ -40,7 +40,7 @@ export default class AuraPlugin extends Plugin {
         this.transcriptionManager = new TranscriptionManager(this.settings);
         this.llmManager = new LLMManager(this.settings);
         this.noteService = new TranscriptionNoteService(this.app, this.settings);
-        this.dailyNoteLinkService = new DailyNoteLinkService(this.app);
+        this.dailyNoteLinkService = new DailyNoteLinkService(this.app, this.settings);
         this.actionManager = new ActionManager(this.app, this.llmManager, this.settings, this.saveSettings.bind(this));
         this.batchManager = new BatchManager(this.app, this.settings, this.transcriptionManager, this.llmManager, this.noteService);
         this.articleReaderManager = new ArticleReaderManager(this.app, this.settings, this.llmManager);

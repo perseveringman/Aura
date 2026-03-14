@@ -1,11 +1,12 @@
 import { App, TFile, moment } from 'obsidian';
+import { PluginSettings } from '../types/config';
 
 /**
  * Service for linking transcription notes to daily notes.
  * Extracted from BatchManager for reuse by AutoTranscriptionManager.
  */
 export class DailyNoteLinkService {
-    constructor(private app: App) {}
+    constructor(private app: App, private settings: PluginSettings) {}
 
     /**
      * Link the given notes to their corresponding daily notes.
@@ -47,15 +48,20 @@ export class DailyNoteLinkService {
         
         // Filter out notes that are already linked in the daily note
         const newNotes = notes.filter(note => {
-            const link = `[[${note.path}|${note.basename}]]`;
-            return !content.includes(link);
+            const embedLink = `![[${note.path}|${note.basename}]]`;
+            const plainLink = `[[${note.path}|${note.basename}]]`;
+            return !content.includes(embedLink) && !content.includes(plainLink);
         });
 
         if (newNotes.length === 0) {
             return;
         }
 
-        const linksContent = newNotes.map(note => `- [[${note.path}|${note.basename}]]`).join('\n');
+        const embed = this.settings.embedInDailyNote;
+        const linksContent = newNotes.map(note => {
+            const link = embed ? `![[${note.path}|${note.basename}]]` : `[[${note.path}|${note.basename}]]`;
+            return `- ${link}`;
+        }).join('\n');
 
         if (content.includes(sectionHeader)) {
             const lines = content.split('\n');

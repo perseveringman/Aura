@@ -78,6 +78,16 @@ export class GeneralSettingsTab {
                     this.plugin.settings.enableAutoLink = value;
                     await this.plugin.saveSettings();
                 }));
+
+        new Setting(this.containerEl)
+            .setName('嵌入转写笔记到每日笔记')
+            .setDesc('开启后使用 ![[]] 嵌入模式，关闭后使用 [[]] 链接模式。')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.embedInDailyNote)
+                .onChange(async (value) => {
+                    this.plugin.settings.embedInDailyNote = value;
+                    await this.plugin.saveSettings();
+                }));
         
         // Insertion Settings
         new Setting(this.containerEl)

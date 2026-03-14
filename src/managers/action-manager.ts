@@ -106,6 +106,14 @@ export class ActionManager {
                                 icon: 'help-circle',
                                 outputMode: 'new-note',
                                 systemPrompt: this.getPrompt('socratic-questioning'),
+                            },
+                            {
+                                id: 'endgame-thinking',
+                                name: '终局思维',
+                                description: '以终为始，推演终局并反向规划行动路径',
+                                icon: 'flag',
+                                outputMode: 'new-note',
+                                systemPrompt: this.getPrompt('endgame-thinking'),
                             }
                         ]
                     },

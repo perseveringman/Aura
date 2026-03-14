@@ -89,6 +89,7 @@ export interface PluginSettings {
 
     // Auto Link to Daily Note Settings
     enableAutoLink: boolean;
+    embedInDailyNote: boolean;
 
     // Article Reader Settings
     enableArticleReader: boolean;
@@ -204,6 +205,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
 
     // Auto Link Defaults
     enableAutoLink: true,
+    embedInDailyNote: true,
 
     // Article Reader Defaults
     enableArticleReader: true,
