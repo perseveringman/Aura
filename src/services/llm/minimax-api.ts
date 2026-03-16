@@ -128,6 +128,9 @@ export class MinimaxLLMService implements LLMService {
             const decoder = new TextDecoder();
             let fullContent = '';
             let buffer = '';
+            // Track if we're inside a <think> block
+            let insideThinkTag = false;
+            let thinkBuffer = '';
 
             while (true) {
                 const { done, value } = await reader.read();
@@ -151,13 +154,55 @@ export class MinimaxLLMService implements LLMService {
 
                     try {
                         const parsed = JSON.parse(data);
-                        const content = parsed.choices?.[0]?.delta?.content;
+                        const delta = parsed.choices?.[0]?.delta;
+
+                        // Skip reasoning_content field (thinking process)
+                        const content = delta?.content;
                         if (content) {
-                            fullContent += content;
-                            // Stream content directly, let caller handle display
-                            // The <think> tags will be visible during streaming
-                            // but final content is filtered in extractContent
-                            onChunk(content, false);
+                            let processedContent = content;
+
+                            // Handle streaming <think> tags
+                            if (insideThinkTag) {
+                                const closeIdx = processedContent.indexOf('</think>');
+                                if (closeIdx !== -1) {
+                                    processedContent = processedContent.substring(closeIdx + 8);
+                                    insideThinkTag = false;
+                                    thinkBuffer = '';
+                                } else {
+                                    thinkBuffer += processedContent;
+                                    continue;
+                                }
+                            }
+
+                            // Check for opening <think> tag
+                            const openIdx = processedContent.indexOf('<think>');
+                            if (openIdx !== -1) {
+                                const beforeThink = processedContent.substring(0, openIdx);
+                                if (beforeThink) {
+                                    fullContent += beforeThink;
+                                    onChunk(beforeThink, false);
+                                }
+
+                                const afterOpen = processedContent.substring(openIdx + 7);
+                                const closeIdx = afterOpen.indexOf('</think>');
+                                if (closeIdx !== -1) {
+                                    const afterThink = afterOpen.substring(closeIdx + 8);
+                                    if (afterThink) {
+                                        fullContent += afterThink;
+                                        onChunk(afterThink, false);
+                                    }
+                                } else {
+                                    insideThinkTag = true;
+                                    thinkBuffer = afterOpen;
+                                }
+                                continue;
+                            }
+
+                            // No think tags, output normally
+                            if (processedContent) {
+                                fullContent += processedContent;
+                                onChunk(processedContent, false);
+                            }
                         }
                     } catch (e) {
                         console.warn('[Minimax] Failed to parse chunk:', data, e);
@@ -165,8 +210,7 @@ export class MinimaxLLMService implements LLMService {
                 }
             }
 
-            // Return content with <think> blocks stripped
-            return this.extractContent(fullContent);
+            return fullContent;
         } catch (error) {
             console.error('Minimax streaming request failed:', error);
             throw error;
