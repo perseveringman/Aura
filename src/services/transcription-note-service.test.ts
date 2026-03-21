@@ -27,6 +27,7 @@ describe('TranscriptionNoteService', () => {
         const service = new TranscriptionNoteService(app, { ...DEFAULT_SETTINGS });
         const audioFile = {
             path: 'Recordings/meeting.m4a',
+            basename: 'meeting',
             stat: { ctime: new Date(2025, 2, 15, 8, 9, 10).getTime() }
         } as TFile;
 

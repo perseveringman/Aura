@@ -8,6 +8,7 @@ const AUDIO_EXTENSIONS = ['mp3', 'wav', 'm4a', 'ogg', 'webm', 'flac', 'aac'];
 const FILE_SETTLE_DELAY_MS = 3000; // Wait for file sync to complete
 const STARTUP_SCAN_DELAY_MS = 30000; // Wait for sync to complete before startup scan
 const SYNC_RECHECK_DELAY_MS = 10000; // Wait before re-checking if a note was synced
+const CLAIM_FOLDER_NAME = '.aura-locks';
 
 /** Normalize folder path: strip leading '/' since Obsidian vault paths never start with '/' */
 function normalizeFolderPath(folder: string): string {
@@ -214,12 +215,7 @@ export class AutoTranscriptionManager {
             return false;
         }
 
-        const voiceNoteFolder = normalizeFolderPath(this.settings.voiceNoteFolder || '/');
-        const timestamp = this.getTimestampForFilename(file);
-        const expectedNoteName = `Transcription-${timestamp}.md`;
-        const expectedPath = voiceNoteFolder === '/'
-            ? expectedNoteName
-            : `${voiceNoteFolder}/${expectedNoteName}`;
+        const expectedPath = this.getExpectedNotePath(file);
 
         // First check
         if (await this.app.vault.adapter.exists(expectedPath)) {
@@ -241,6 +237,12 @@ export class AutoTranscriptionManager {
         }
 
         this.processing.add(file.path);
+        const claimPath = await this.tryClaimAudioFile(file);
+
+        if (!claimPath) {
+            this.processing.delete(file.path);
+            return;
+        }
 
         try {
             // 1. Transcribe
@@ -261,8 +263,75 @@ export class AutoTranscriptionManager {
             // 3. Create transcription note
             await this.noteService.createTranscriptionNote(fullText, file, aiText);
         } finally {
+            await this.releaseClaim(claimPath);
             this.processing.delete(file.path);
         }
+    }
+
+    private getExpectedNotePath(file: TFile): string {
+        const voiceNoteFolder = normalizeFolderPath(this.settings.voiceNoteFolder || '/');
+        const timestamp = this.getTimestampForFilename(file);
+        const expectedNoteName = `Transcription-${timestamp}.md`;
+
+        return voiceNoteFolder === '/'
+            ? expectedNoteName
+            : `${voiceNoteFolder}/${expectedNoteName}`;
+    }
+
+    private getClaimPath(file: TFile): string {
+        const voiceNoteFolder = normalizeFolderPath(this.settings.voiceNoteFolder || '/');
+        const timestamp = this.getTimestampForFilename(file);
+        const claimFileName = `${timestamp}.json`;
+
+        if (voiceNoteFolder === '/') {
+            return `${CLAIM_FOLDER_NAME}/${claimFileName}`;
+        }
+
+        return `${voiceNoteFolder}/${CLAIM_FOLDER_NAME}/${claimFileName}`;
+    }
+
+    private async tryClaimAudioFile(file: TFile): Promise<string | null> {
+        const expectedPath = this.getExpectedNotePath(file);
+        if (await this.app.vault.adapter.exists(expectedPath)) {
+            return null;
+        }
+
+        const claimPath = this.getClaimPath(file);
+        const claimFolder = claimPath.slice(0, claimPath.lastIndexOf('/'));
+        await this.ensureFolderExists(claimFolder);
+
+        const claimPayload = JSON.stringify({
+            audioPath: file.path,
+            claimedAt: new Date().toISOString()
+        });
+
+        try {
+            await this.app.vault.create(claimPath, claimPayload);
+            return claimPath;
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            if (message.toLowerCase().includes('exist')) {
+                return null;
+            }
+
+            throw error;
+        }
+    }
+
+    private async releaseClaim(claimPath: string): Promise<void> {
+        try {
+            await this.app.vault.adapter.remove(claimPath);
+        } catch (error) {
+            console.warn(`[ASR Auto] 清理 claim 失败: ${claimPath}`, error);
+        }
+    }
+
+    private async ensureFolderExists(folderPath: string): Promise<void> {
+        if (await this.app.vault.adapter.exists(folderPath)) {
+            return;
+        }
+
+        await this.app.vault.adapter.mkdir(folderPath);
     }
 
     /**
